@@ -36,5 +36,11 @@ public class UserController {
         return userService.verify(user,response);
     }
 
+    @PostMapping("/test")
+    public String postMethodName(@RequestBody JWT entity) {
+        return entity.getToken();
+    }
+    
+
 
 }

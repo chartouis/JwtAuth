@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.chitas.example.service.CarderioUserDetailsService;
+import com.chitas.example.service.CookieService;
 import com.chitas.example.service.JWTService;
 
 import java.io.IOException;
@@ -20,26 +21,22 @@ import java.io.IOException;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    private JWTService jwtService;
+    private final JWTService jwtService;
+    private final ApplicationContext context;
+    private final CookieService cookieService;
 
-    private ApplicationContext context;
-
-    public JwtFilter(JWTService jwtService, ApplicationContext context){
+    public JwtFilter(JWTService jwtService, ApplicationContext context, CookieService cookieService){
         this.jwtService = jwtService;
         this.context = context;
+        this.cookieService = cookieService;
     }
 
     @SuppressWarnings("null")
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        String token = null;
-        String username = null;
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-            username = jwtService.extractUserName(token);
-        }
+        String token = cookieService.getToken(request);
+        String username = jwtService.extractUserName(token); 
+        System.out.println(username);       
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null){
 

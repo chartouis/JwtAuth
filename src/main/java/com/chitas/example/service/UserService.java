@@ -56,8 +56,8 @@ public class UserService {
                 .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
         if (authentication.isAuthenticated()) {
             String tok = jwtService.generateToken(user.getUsername());
-            cook.setJwtCookie(tok, response);
-            return new JWT(tok);
+            cook.setCookie(tok, response, "/");
+            return new JWT("success");
         }
         return new JWT("failure");
     }
