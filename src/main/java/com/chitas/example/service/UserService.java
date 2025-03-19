@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -55,11 +56,12 @@ public class UserService {
         Authentication authentication = manager
                 .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
         if (authentication.isAuthenticated()) {
-            String tok = jwtService.generateToken(user.getUsername());
-            cook.setCookie(tok, response, "/");
-            return new JWT("success");
+            String tok = jwtService.generateToken(user.getUsername()); // add something special to the username to make
+                                                                       // it different then access token
+            cook.setCookie(tok, response, "ACCESS-TOKEN-JWTAUTH", "/refresh"); // change later to refresh token
+            return new JWT("SUCCESS");
         }
-        return new JWT("failure");
+        return new JWT("FAILURE");
     }
 
     public static boolean isValidEmail(String email) {
@@ -82,4 +84,10 @@ public class UserService {
         return new UserDTO(0L, "Failed to register", cause, LocalDateTime.MIN);
     }
 
+    public JWT refresh(HttpServletResponse response) {
+        String tok = jwtService.generateToken(SecurityContextHolder.getContext().getAuthentication().getName());
+        if(tok==null){return new JWT("FAILURE");}
+        cook.setCookie(tok, response, "REFRESH-TOKEN-JWTAUTH", "/");                                 
+        return new JWT("SUCCESS");
+    }
 }

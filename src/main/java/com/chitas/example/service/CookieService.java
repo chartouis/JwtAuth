@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class CookieService {
 
-    public void setCookie(String jwtToken, HttpServletResponse response, String path) {
-        Cookie cookie = new Cookie("token", jwtToken);
+    public String setCookie(String jwtToken, HttpServletResponse response, String name ,String path) {
+        Cookie cookie = new Cookie(name, jwtToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(false); // Set to true in production with HTTPS
         cookie.setPath(path);
@@ -24,6 +24,7 @@ public class CookieService {
             cookieHeader += "; Secure";
         }
         response.addHeader("Set-Cookie", cookieHeader);
+        return cookieHeader;
     }
 
     public String getToken(HttpServletRequest request){

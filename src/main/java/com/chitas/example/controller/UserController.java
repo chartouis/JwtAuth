@@ -12,6 +12,8 @@ import com.chitas.example.model.User;
 import com.chitas.example.model.DTO.UserDTO;
 import com.chitas.example.repo.UsersRepo;
 import com.chitas.example.service.UserService;
+import org.springframework.web.bind.annotation.GetMapping;
+
 
 
 @RestController
@@ -36,9 +38,15 @@ public class UserController {
         return userService.verify(user,response);
     }
 
+    @GetMapping("/refresh")
+    public JWT refresh(HttpServletResponse response) {
+        return userService.refresh(response);
+    }
+    
+
     @PostMapping("/test")
-    public String postMethodName(@RequestBody JWT entity) {
-        return entity.getToken();
+    public JWT postMethodName(@RequestBody JWT entity) {
+        return entity;
     }
     
 
