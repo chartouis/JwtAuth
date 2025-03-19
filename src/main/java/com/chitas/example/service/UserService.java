@@ -23,7 +23,9 @@ public class UserService {
     private final UsersRepo repo;
     private final AuthenticationManager manager;
     private final JWTService jwtService;
-    CookieService cook;
+    private final CookieService cook;
+    private final int REFRESH_TOKEN_AGE = 60*60*24*30; //Basically a Month
+    private final int ACCESS_TOKEN_AGE = 60*10; //Basically 10 minutes. Consider changing to a negative value
 
     public UserService(UsersRepo repo, AuthenticationManager manager, JWTService jwtservice, CookieService cook) {
         this.repo = repo;
@@ -56,9 +58,8 @@ public class UserService {
         Authentication authentication = manager
                 .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
         if (authentication.isAuthenticated()) {
-            String tok = jwtService.generateToken(user.getUsername()); // add something special to the username to make
-                                                                       // it different then access token
-            cook.setCookie(tok, response, "ACCESS-TOKEN-JWTAUTH", "/refresh"); // change later to refresh token
+            String tok = jwtService.generateToken(user.getUsername());
+            cook.setCookie(tok, response, "REFRESH-TOKEN-JWTAUTH", "/refresh", REFRESH_TOKEN_AGE); 
             return new JWT("SUCCESS");
         }
         return new JWT("FAILURE");
@@ -87,7 +88,7 @@ public class UserService {
     public JWT refresh(HttpServletResponse response) {
         String tok = jwtService.generateToken(SecurityContextHolder.getContext().getAuthentication().getName());
         if(tok==null){return new JWT("FAILURE");}
-        cook.setCookie(tok, response, "REFRESH-TOKEN-JWTAUTH", "/");                                 
+        cook.setCookie(tok, response, "ACCESS-TOKEN-JWTAUTH", "/", ACCESS_TOKEN_AGE);                                 
         return new JWT("SUCCESS");
     }
 }

@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class CookieService {
 
-    public String setCookie(String jwtToken, HttpServletResponse response, String name ,String path) {
+    public String setCookie(String jwtToken, HttpServletResponse response, String name ,String path, int age) {
         Cookie cookie = new Cookie(name, jwtToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Set to true in production with HTTPS
+        cookie.setSecure(false); // SET TO TRUE IN PRODUCTION
         cookie.setPath(path);
-        cookie.setMaxAge(100); //change on deploy
+        cookie.setMaxAge(age);
 
         String cookieHeader = String.format("%s=%s; Path=%s; HttpOnly; SameSite=Strict; Max-Age=%d",
                 cookie.getName(),
@@ -32,7 +32,6 @@ public class CookieService {
         if (cookies == null){return null;}
         Cookie cookie = cookies[0];
         String token = cookie.getValue();
-        System.out.println(token);
         return token;
     }
 }

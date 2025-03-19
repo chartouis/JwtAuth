@@ -44,7 +44,7 @@ public class UserController {
     }
     
 
-    @PostMapping("/test")
+    @PostMapping("/test") //This is useless. You can freely delete it
     public JWT postMethodName(@RequestBody JWT entity) {
         return entity;
     }

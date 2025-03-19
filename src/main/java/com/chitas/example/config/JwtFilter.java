@@ -36,7 +36,6 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String token = cookieService.getToken(request);
         String username = jwtService.extractUserName(token); 
-        System.out.println(username);       
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null){
 
