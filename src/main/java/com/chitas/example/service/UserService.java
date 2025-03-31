@@ -99,14 +99,13 @@ public class UserService {
         if (tok == null) {
             return new JWT("FAILURE");
         }
-        cook.setCookie(tok, response, "ACCESS-TOKEN-JWTAUTH", "/", ACCESS_TOKEN_AGE);
+        cook.setCookie(tok, response, "ACCESS-TOKEN-JWTAUTH", "/api", ACCESS_TOKEN_AGE);
         return new JWT("SUCCESS");
     }
 
     public String googleOauth(AuthCode code, HttpServletResponse response) {
         try {
             GoogleCredentials googleCredentials = gFlowService.getCredentials(code.getCode());
-            gFlowService.printUserInfo(googleCredentials);
             UserCreds userCreds = gFlowService.getUserInfo(googleCredentials);
             User user;
             if (repo.existsByEmail(userCreds.getEmail())) {
@@ -126,7 +125,7 @@ public class UserService {
             return "SUCCESS";
 
         } catch (IOException e) {
-            return "fail";
+            return "FAILURE";
         }
 
     }

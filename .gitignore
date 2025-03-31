@@ -3,7 +3,7 @@
 .gradle/
 build/
 src/main/resources/.env
-
+bin/
 
 
 .env

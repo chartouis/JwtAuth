@@ -49,7 +49,7 @@ public class UserController {
     
     
 
-    @GetMapping("/test") //This is useless. You can freely delete it
+    @GetMapping("/api/test") //This is useless. You can freely delete it
     public String postMethodName() {
         return "SUCCESS";
     }
