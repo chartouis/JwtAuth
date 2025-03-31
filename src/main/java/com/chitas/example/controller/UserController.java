@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.chitas.example.model.AuthCode;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.DTO.UserDTO;
@@ -21,8 +22,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class UserController {
 
     private final UserService userService;
-
-
     
     public UserController(UsersRepo usersRepo, UserService userService) {
         this.userService = userService;
@@ -42,13 +41,19 @@ public class UserController {
     public JWT refresh(HttpServletResponse response) {
         return userService.refresh(response);
     }
+
+    @PostMapping("/oauth")
+    public String googleOauth(@RequestBody AuthCode code) {
+        return userService.googleOauth(code);
+    }
+    
+    
     
 
     @PostMapping("/test") //This is useless. You can freely delete it
     public JWT postMethodName(@RequestBody JWT entity) {
         return entity;
     }
-    
 
 
 }

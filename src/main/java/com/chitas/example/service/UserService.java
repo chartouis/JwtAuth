@@ -9,11 +9,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.chitas.example.model.AuthCode;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.DTO.UserDTO;
 import com.chitas.example.repo.UsersRepo;
+import com.google.auth.oauth2.GoogleCredentials;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,14 +24,16 @@ import java.util.regex.Pattern;
 @Service
 public class UserService {
     private final UsersRepo repo;
+    private final GoogleAuthFlowService gFlowService;
     private final AuthenticationManager manager;
     private final JWTService jwtService;
     private final CookieService cook;
     private final int REFRESH_TOKEN_AGE = 60*60*24*30; //Basically a Month
     private final int ACCESS_TOKEN_AGE = 60*10; //Basically 10 minutes. Consider changing to a negative value
 
-    public UserService(UsersRepo repo, AuthenticationManager manager, JWTService jwtservice, CookieService cook) {
+    public UserService(UsersRepo repo, AuthenticationManager manager, JWTService jwtservice, CookieService cook, GoogleAuthFlowService gFlowService) {
         this.repo = repo;
+        this.gFlowService = gFlowService;
         this.manager = manager;
         this.jwtService = jwtservice;
         this.cook = cook;
@@ -70,7 +75,8 @@ public class UserService {
             return false;
         }
 
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z]{2,}$";
+
         Pattern pattern = Pattern.compile(emailRegex);
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
@@ -90,5 +96,17 @@ public class UserService {
         if(tok==null){return new JWT("FAILURE");}
         cook.setCookie(tok, response, "ACCESS-TOKEN-JWTAUTH", "/", ACCESS_TOKEN_AGE);                                 
         return new JWT("SUCCESS");
+    }
+
+    public String googleOauth(AuthCode code) {
+        try {
+            System.out.println(code);
+            String g = "fail";
+            GoogleCredentials googleCredentials = gFlowService.getCredentials(code.getCode());
+            GoogleAuthFlowService.printUserInfo(googleCredentials);
+            return googleCredentials.getRequestMetadata().toString();
+        } catch (IOException e) {
+            return "fail";
+        }
     }
 }
