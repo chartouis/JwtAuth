@@ -4,10 +4,9 @@ import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 
-import com.google.api.client.auth.oauth2.TokenResponse;
+import com.chitas.example.model.UserCreds;
 import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -27,9 +26,6 @@ public class GoogleAuthFlowService {
             .getenv("SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID");
     private static final String CLIENT_SECRET = System
             .getenv("SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET");
-
-    public GoogleAuthFlowService() {
-    }
 
     public GoogleTokenResponse requestTokens(String authCode) throws IOException {
         try {
@@ -62,9 +58,21 @@ public class GoogleAuthFlowService {
 
     }
 
-    public static void printUserInfo(GoogleCredentials credentials) {
+    public void printUserInfo(GoogleCredentials credentials) {
         try {
-            // Refresh credentials if the access token is expired
+
+            JsonObject userInfo = getUserJson(credentials);
+
+            System.out.println("User ID: " + userInfo.get("sub").getAsString());
+            System.out.println("Email: " + userInfo.get("email").getAsString());
+            System.out.println("Name: " + userInfo.get("name").getAsString());
+        } catch (Exception e) {
+            System.out.println("Error retrieving user info: " + e.getMessage());
+        }
+    }
+
+    private JsonObject getUserJson(GoogleCredentials credentials) {
+        try {
             credentials.refreshIfExpired();
             String accessToken = credentials.getAccessToken().getTokenValue();
 
@@ -79,13 +87,21 @@ public class GoogleAuthFlowService {
             String json = response.parseAsString();
 
             // Parse JSON response
-            JsonObject userInfo = JsonParser.parseString(json).getAsJsonObject();
-            System.out.println("User ID: " + userInfo.get("sub").getAsString());
-            System.out.println("Email: " + userInfo.get("email").getAsString());
-            System.out.println("Name: " + userInfo.get("name").getAsString());
+            return JsonParser.parseString(json).getAsJsonObject();
         } catch (Exception e) {
-            System.out.println("Error retrieving user info: " + e.getMessage());
+            System.out.println("Method getUserInfo returned null");
+            return null;
         }
+    }
+
+    public UserCreds getUserInfo(GoogleCredentials credentials) {
+        JsonObject jsonObject = getUserJson(credentials);
+        return new UserCreds(jsonObject.get("sub").getAsString(), jsonObject.get("email").getAsString(),
+                jsonObject.get("name").getAsString());
+    }
+
+    public String autoEmailToUsername(String email){
+        return email.split("@")[0];
     }
 
 }

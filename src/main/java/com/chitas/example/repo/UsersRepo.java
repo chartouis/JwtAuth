@@ -8,6 +8,7 @@ import com.chitas.example.model.User;
 @Repository
 public interface UsersRepo extends JpaRepository<User, Long> {
     User findByUsername(String username);
+    User findByEmail(String email);
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
 

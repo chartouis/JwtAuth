@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import com.chitas.example.model.AuthCode;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
+import com.chitas.example.model.UserCreds;
 import com.chitas.example.model.DTO.UserDTO;
 import com.chitas.example.repo.UsersRepo;
+import com.chitas.example.utils.RandomStringUtil;
 import com.google.auth.oauth2.GoogleCredentials;
 
 import java.io.IOException;
@@ -28,10 +30,11 @@ public class UserService {
     private final AuthenticationManager manager;
     private final JWTService jwtService;
     private final CookieService cook;
-    private final int REFRESH_TOKEN_AGE = 60*60*24*30; //Basically a Month
-    private final int ACCESS_TOKEN_AGE = 60*10; //Basically 10 minutes. Consider changing to a negative value
+    private final int REFRESH_TOKEN_AGE = 60 * 60 * 24 * 30; // Basically a Month
+    private final int ACCESS_TOKEN_AGE = 60 * 10; // Basically 10 minutes. Consider changing to a negative value
 
-    public UserService(UsersRepo repo, AuthenticationManager manager, JWTService jwtservice, CookieService cook, GoogleAuthFlowService gFlowService) {
+    public UserService(UsersRepo repo, AuthenticationManager manager, JWTService jwtservice, CookieService cook,
+            GoogleAuthFlowService gFlowService) {
         this.repo = repo;
         this.gFlowService = gFlowService;
         this.manager = manager;
@@ -64,7 +67,7 @@ public class UserService {
                 .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
         if (authentication.isAuthenticated()) {
             String tok = jwtService.generateToken(user.getUsername());
-            cook.setCookie(tok, response, "REFRESH-TOKEN-JWTAUTH", "/refresh", REFRESH_TOKEN_AGE); 
+            cook.setCookie(tok, response, "REFRESH-TOKEN-JWTAUTH", "/refresh", REFRESH_TOKEN_AGE);
             return new JWT("SUCCESS");
         }
         return new JWT("FAILURE");
@@ -93,20 +96,38 @@ public class UserService {
 
     public JWT refresh(HttpServletResponse response) {
         String tok = jwtService.generateToken(SecurityContextHolder.getContext().getAuthentication().getName());
-        if(tok==null){return new JWT("FAILURE");}
-        cook.setCookie(tok, response, "ACCESS-TOKEN-JWTAUTH", "/", ACCESS_TOKEN_AGE);                                 
+        if (tok == null) {
+            return new JWT("FAILURE");
+        }
+        cook.setCookie(tok, response, "ACCESS-TOKEN-JWTAUTH", "/", ACCESS_TOKEN_AGE);
         return new JWT("SUCCESS");
     }
 
-    public String googleOauth(AuthCode code) {
+    public String googleOauth(AuthCode code, HttpServletResponse response) {
         try {
-            System.out.println(code);
-            String g = "fail";
             GoogleCredentials googleCredentials = gFlowService.getCredentials(code.getCode());
-            GoogleAuthFlowService.printUserInfo(googleCredentials);
-            return googleCredentials.getRequestMetadata().toString();
+            gFlowService.printUserInfo(googleCredentials);
+            UserCreds userCreds = gFlowService.getUserInfo(googleCredentials);
+            User user;
+            if (repo.existsByEmail(userCreds.getEmail())) {
+                user = repo.findByEmail(userCreds.getEmail());
+
+            } else {
+                User newUser = new User();
+                newUser.setEmail(userCreds.getEmail());
+                newUser.setUsername(gFlowService.autoEmailToUsername(userCreds.getEmail()));
+                newUser.setPassword(encoder.encode(RandomStringUtil.generate(40)));
+                repo.save(newUser);
+                user = newUser;
+
+            }
+            String tok = jwtService.generateToken(user.getUsername());
+            cook.setCookie(tok, response, "REFRESH-TOKEN-JWTAUTH", "/refresh", REFRESH_TOKEN_AGE);
+            return "SUCCESS";
+
         } catch (IOException e) {
             return "fail";
         }
+
     }
 }

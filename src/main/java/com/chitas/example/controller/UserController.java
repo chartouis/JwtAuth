@@ -11,7 +11,6 @@ import com.chitas.example.model.AuthCode;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.DTO.UserDTO;
-import com.chitas.example.repo.UsersRepo;
 import com.chitas.example.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -23,7 +22,7 @@ public class UserController {
 
     private final UserService userService;
     
-    public UserController(UsersRepo usersRepo, UserService userService) {
+    public UserController(UserService userService) {
         this.userService = userService;
     }
 
@@ -43,16 +42,16 @@ public class UserController {
     }
 
     @PostMapping("/oauth")
-    public String googleOauth(@RequestBody AuthCode code) {
-        return userService.googleOauth(code);
+    public String googleOauth(@RequestBody AuthCode code, HttpServletResponse response) {
+        return userService.googleOauth(code, response);
     }
     
     
     
 
-    @PostMapping("/test") //This is useless. You can freely delete it
-    public JWT postMethodName(@RequestBody JWT entity) {
-        return entity;
+    @GetMapping("/test") //This is useless. You can freely delete it
+    public String postMethodName() {
+        return "SUCCESS";
     }
 
 
