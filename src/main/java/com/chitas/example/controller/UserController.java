@@ -12,6 +12,9 @@ import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.DTO.UserDTO;
 import com.chitas.example.service.UserService;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 
 
@@ -21,33 +24,34 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class UserController {
 
     private final UserService userService;
-    
+
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
     @PostMapping("/register")
-    public UserDTO register(@RequestBody User user) {
-        return userService.register(user);
+    public ResponseEntity<UserDTO> register(@RequestBody User user) {
+        UserDTO registeredUser = userService.register(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);
     }
 
     @PostMapping("/login")
-    public JWT login(@RequestBody User user, HttpServletResponse response){
-        return userService.verify(user,response);
+    public ResponseEntity<JWT> login(@RequestBody User user, HttpServletResponse response) {
+        JWT token = userService.verify(user, response);
+        return ResponseEntity.ok(token);
     }
 
     @GetMapping("/refresh")
-    public JWT refresh(HttpServletResponse response) {
-        return userService.refresh(response);
+    public ResponseEntity<JWT> refresh(HttpServletResponse response) {
+        JWT token = userService.refresh(response);
+        return ResponseEntity.ok(token);
     }
 
     @PostMapping("/oauth")
-    public String googleOauth(@RequestBody AuthCode code, HttpServletResponse response) {
-        return userService.googleOauth(code, response);
+    public ResponseEntity<String> googleOauth(@RequestBody AuthCode code, HttpServletResponse response) {
+        String result = userService.googleOauth(code, response);
+        return ResponseEntity.ok(result);
     }
-    
-    
-    
 
     @GetMapping("/api/test") //This is useless. You can freely delete it
     public String postMethodName() {
