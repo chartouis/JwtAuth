@@ -1,6 +1,5 @@
 package com.chitas.example.controller;
 
-
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,22 +10,23 @@ import com.chitas.example.model.AuthCode;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.DTO.UserDTO;
+import com.chitas.example.service.MailService;
 import com.chitas.example.service.UserService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 
-
-
 @RestController
 @RequestMapping
 public class UserController {
 
     private final UserService userService;
+    private final MailService mailService; // test
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, MailService mailService) {
         this.userService = userService;
+        this.mailService = mailService;
     }
 
     @PostMapping("/register")
@@ -53,10 +53,18 @@ public class UserController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/api/test") //This is useless. You can freely delete it
+    // This is useless. You can freely delete it
+    @GetMapping("/api/test")
     public String postMethodName() {
         return "SUCCESS";
     }
 
+    @GetMapping("/api/mail")
+    public void mailSomething() {
+
+        mailService.sendSimpleMessage("erna95er@gmail.com", "я научился спамить",
+                "ну все пиздец. я по идее могу 500 вот таких мейлов высылать в день");
+
+    }
 
 }
