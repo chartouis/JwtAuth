@@ -14,7 +14,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "facode")
+@Table(name = "facodes")
 public class FACode {
 
     @Id
@@ -22,12 +22,11 @@ public class FACode {
     private Long id;
 
     @Column(nullable = false)
-    private int code;
+    private String code;
 
     @Column(nullable = false)
     private Instant expiration;
-    
-    @Column(nullable = false)
+
     @OneToOne
     @JoinColumn(name = "fingerprint_id")
     private Fingerprint fingerprint;

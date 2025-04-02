@@ -21,7 +21,6 @@ public class Fingerprint {
     @Column(nullable = false)
     private String hash;
 
-    @Column(nullable = false)
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
