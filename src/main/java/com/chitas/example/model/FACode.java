@@ -11,10 +11,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @Table(name = "facodes")
+@NoArgsConstructor
 public class FACode {
 
     @Id
@@ -30,4 +32,10 @@ public class FACode {
     @OneToOne
     @JoinColumn(name = "fingerprint_id")
     private Fingerprint fingerprint;
+
+    public FACode(String code, Instant expiration, Fingerprint fingerprint){
+        this.code = code;
+        this.expiration = expiration;
+        this.fingerprint = fingerprint;
+    }
 }

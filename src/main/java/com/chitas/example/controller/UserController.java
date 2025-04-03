@@ -8,10 +8,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chitas.example.model.AuthCode;
 import com.chitas.example.model.JWT;
-import com.chitas.example.model.User;
 import com.chitas.example.model.DTO.UserDTO;
+import com.chitas.example.model.Wrappers.UserAndFingerPrint;
 import com.chitas.example.service.MailService;
 import com.chitas.example.service.UserService;
+
+import java.time.LocalDateTime;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,14 +32,23 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> register(@RequestBody User user) {
-        UserDTO registeredUser = userService.register(user);
+    public ResponseEntity<UserDTO> register(@RequestBody UserAndFingerPrint wrapper) {
+
+        UserDTO registeredUser = userService.register(wrapper.getUser());
+        if (!userService.isVerifiedUser(wrapper)) {
+            return ResponseEntity.status(HttpStatus.CONTINUE).body(new UserDTO(0L, "2FA",
+                    "The code was sent to this email" + wrapper.getUser().getEmail(), LocalDateTime.now()));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JWT> login(@RequestBody User user, HttpServletResponse response) {
-        JWT token = userService.verify(user, response);
+    public ResponseEntity<JWT> login(@RequestBody UserAndFingerPrint wrapper, HttpServletResponse response) {
+
+        JWT token = userService.verify(wrapper.getUser(), response);
+        if (!userService.isVerifiedUser(wrapper)) {
+            return ResponseEntity.status(HttpStatus.CONTINUE).body(new JWT("VERIFY EMAIL"));
+        }
         return ResponseEntity.ok(token);
     }
 
@@ -50,6 +61,12 @@ public class UserController {
     @PostMapping("/oauth")
     public ResponseEntity<String> googleOauth(@RequestBody AuthCode code, HttpServletResponse response) {
         String result = userService.googleOauth(code, response);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/code")
+    public ResponseEntity<String> validateUser(@RequestBody JWT token) { //replace JWT with codandfingerprint, and then check for the fprint and code 
+        String result = userService.validateUser(token.getToken());
         return ResponseEntity.ok(result);
     }
 

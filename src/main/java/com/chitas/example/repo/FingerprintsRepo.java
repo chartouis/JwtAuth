@@ -8,4 +8,6 @@ import com.chitas.example.model.User;
 @Repository
 public interface FingerprintsRepo extends JpaRepository<Fingerprint, Long> {
     User findUserByHash(String hash);
+    Fingerprint findFingerprintByHash(String hash);
+    boolean existsByHash(String hash);
 }

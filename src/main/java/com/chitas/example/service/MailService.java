@@ -1,15 +1,24 @@
 package com.chitas.example.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import com.chitas.example.model.FACode;
+import com.chitas.example.model.Fingerprint;
+
+
 @Service
 public class MailService {
 
-  @Autowired
-  private JavaMailSender emailSender;
+  private final JavaMailSender emailSender;
+  private final TwoFactorService twoFactorService;
+
+  public MailService(JavaMailSender emailSender, TwoFactorService twoFactorService) {
+    this.emailSender = emailSender;
+    this.twoFactorService = twoFactorService;
+
+  }
 
   public void sendSimpleMessage(
       String to, String subject, String text) {
@@ -22,4 +31,11 @@ public class MailService {
     emailSender.send(message);
 
   }
+
+  public void sendVerficationCode(Fingerprint fing) {
+    
+    FACode code = twoFactorService.generateCode(fing);
+    sendSimpleMessage(fing.getUser().getEmail(), "VERIFACTION CODE", code.getCode());
+  }
+
 }

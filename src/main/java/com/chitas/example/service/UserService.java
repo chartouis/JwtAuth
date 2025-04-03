@@ -10,10 +10,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.chitas.example.model.AuthCode;
+import com.chitas.example.model.Fingerprint;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.UserCreds;
 import com.chitas.example.model.DTO.UserDTO;
+import com.chitas.example.model.Wrappers.UserAndFingerPrint;
 import com.chitas.example.repo.UsersRepo;
 import com.chitas.example.utils.RandomStringUtil;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -31,15 +33,19 @@ public class UserService {
     private final JWTService jwtService;
     private final CookieService cook;
     private final int REFRESH_TOKEN_AGE = 60 * 60 * 24 * 30; // Basically a Month
-    private final int ACCESS_TOKEN_AGE = 60 * 10; // Basically 10 minutes. Consider changing to a negative value
+    private final int ACCESS_TOKEN_AGE = 60 * 10;
+    private final TwoFactorService twoFactorService;
+    private final MailService mailService; // Basically 10 minutes. Consider changing to a negative value
 
     public UserService(UsersRepo repo, AuthenticationManager manager, JWTService jwtservice, CookieService cook,
-            GoogleAuthFlowService gFlowService) {
+            GoogleAuthFlowService gFlowService, TwoFactorService twoFactorService, MailService mailService) {
         this.repo = repo;
         this.gFlowService = gFlowService;
         this.manager = manager;
         this.jwtService = jwtservice;
         this.cook = cook;
+        this.twoFactorService = twoFactorService;
+        this.mailService = mailService;
     }
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
@@ -128,5 +134,34 @@ public class UserService {
             return "FAILURE";
         }
 
+    }
+
+    public String validateUser(String code) {
+        boolean result = twoFactorService.verifyFingerprint(code);
+        if (result) {
+            User user = twoFactorService.getUserbyCode(code);
+            register(user);
+            return "SUCCCESS";
+        } else {
+            return "FAILURE";
+        }
+
+    }
+    
+    public boolean isVerifiedUser(UserAndFingerPrint uaf) {
+        if(twoFactorService.getFingerprintByHash(uaf.getFingerprint().getHash())!=null){
+        if (twoFactorService.getFingerprintByHash(uaf.getFingerprint().getHash()).isVerified()) {
+            return true;
+        }}
+        if (!twoFactorService.fingerprintExists(uaf.getFingerprint())) {
+            Fingerprint f = twoFactorService.createFingerprint(uaf);
+            mailService.sendVerficationCode(f);
+            return false;
+        }
+
+        Fingerprint f = twoFactorService.getFingerprintByHash(uaf.getFingerprint().getHash());
+        mailService.sendVerficationCode(f);
+
+        return false;
     }
 }
