@@ -10,11 +10,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.chitas.example.model.AuthCode;
+import com.chitas.example.model.FACode;
 import com.chitas.example.model.Fingerprint;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.UserCreds;
 import com.chitas.example.model.DTO.UserDTO;
+import com.chitas.example.model.Wrappers.CodeAndFingerprint;
 import com.chitas.example.model.Wrappers.UserAndFingerPrint;
 import com.chitas.example.repo.UsersRepo;
 import com.chitas.example.utils.RandomStringUtil;
@@ -136,10 +138,11 @@ public class UserService {
 
     }
 
-    public String validateUser(String code) {
-        boolean result = twoFactorService.verifyFingerprint(code);
+    public String validateUser(CodeAndFingerprint caf) {
+        FACode code = caf.getCode();
+        boolean result = twoFactorService.verifyFingerprint(caf);
         if (result) {
-            User user = twoFactorService.getUserbyCode(code);
+            User user = twoFactorService.getUserbyCode(code.getCode());
             register(user);
             return "SUCCCESS";
         } else {

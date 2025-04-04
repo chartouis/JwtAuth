@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.chitas.example.model.AuthCode;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.DTO.UserDTO;
+import com.chitas.example.model.Wrappers.CodeAndFingerprint;
 import com.chitas.example.model.Wrappers.UserAndFingerPrint;
 import com.chitas.example.service.MailService;
 import com.chitas.example.service.UserService;
@@ -65,8 +66,8 @@ public class UserController {
     }
 
     @PostMapping("/code")
-    public ResponseEntity<String> validateUser(@RequestBody JWT token) { //replace JWT with codandfingerprint, and then check for the fprint and code 
-        String result = userService.validateUser(token.getToken());
+    public ResponseEntity<String> validateUser(@RequestBody CodeAndFingerprint caf) { //replace JWT with codandfingerprint, and then check for the fprint and code 
+        String result = userService.validateUser(caf);
         return ResponseEntity.ok(result);
     }
 

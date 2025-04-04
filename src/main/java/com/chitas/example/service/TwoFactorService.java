@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.chitas.example.model.FACode;
 import com.chitas.example.model.Fingerprint;
 import com.chitas.example.model.User;
+import com.chitas.example.model.Wrappers.CodeAndFingerprint;
 import com.chitas.example.model.Wrappers.UserAndFingerPrint;
 import com.chitas.example.repo.CodesRepo;
 import com.chitas.example.repo.FingerprintsRepo;
@@ -74,23 +75,34 @@ public class TwoFactorService {
         return fingerprint.getId().equals(code.getFingerprint().getId());
     }
 
-    public boolean verifyFingerprint(String code) {
-
-        FACode fcode = cRepo.findFACodeByCode(code);
+    public boolean verifyFingerprint(CodeAndFingerprint caf) {
+        FACode fcode = cRepo.findFACodeByCode(caf.getCode().getCode());
+    
         if (fcode == null) {
-            System.out.println("invalid code");
+            System.out.println("Invalid code");
             return false;
         }
-        Fingerprint cFingerprint = cRepo.findFingerprintByFacodeId(fcode.getId());
-
-        if (!fingerprintExists(cFingerprint)) {
+    
+        Fingerprint submitted = fRepo.findFingerprintByHash(caf.getFingerprint().getHash());
+    
+        if (submitted == null) {
             return false;
         }
-        cFingerprint.setVerified(true);
-        fRepo.save(cFingerprint);
+    
+        Fingerprint expected = fcode.getFingerprint();
+        if (expected == null) {
+            return false;
+        }
+    
+        if (!submitted.getHash().equals(expected.getHash())) {
+            return false;
+        }
+    
+        expected.setVerified(true);
+        fRepo.save(expected);
         return true;
-
     }
+    
 
     public User getUserbyCode(String code) {
         FACode fcode = cRepo.findFACodeByCode(code);
