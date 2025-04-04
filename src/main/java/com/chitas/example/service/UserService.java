@@ -157,6 +157,10 @@ public class UserService {
             return true;
         }}
         if (!twoFactorService.fingerprintExists(uaf.getFingerprint())) {
+            if(!repo.existsByEmail(uaf.getUser().getEmail())){
+                return false;
+            }
+            uaf.setUser(repo.findByEmail(uaf.getUser().getEmail()));
             Fingerprint f = twoFactorService.createFingerprint(uaf);
             mailService.sendVerficationCode(f);
             return false;

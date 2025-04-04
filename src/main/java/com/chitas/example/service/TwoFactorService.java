@@ -82,7 +82,7 @@ public class TwoFactorService {
             System.out.println("Invalid code");
             return false;
         }
-    
+        System.out.println(caf.getFingerprint().getHash());
         Fingerprint submitted = fRepo.findFingerprintByHash(caf.getFingerprint().getHash());
     
         if (submitted == null) {
@@ -93,6 +93,8 @@ public class TwoFactorService {
         if (expected == null) {
             return false;
         }
+        System.out.println(submitted.getHash());
+        System.out.println(expected.getHash());
     
         if (!submitted.getHash().equals(expected.getHash())) {
             return false;
