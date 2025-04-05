@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -14,24 +15,18 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@Log4j2
 public class JWTService {
 
     private String secretkey = System.getenv("SECRET_KEY_FOR_JWTS");
 
     public JWTService() {
-
-        // try {
-        //     KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-        //     SecretKey sk = keyGen.generateKey();
-        //     secretkey = Base64.getEncoder().encodeToString(sk.getEncoded());
-        // } catch (NoSuchAlgorithmException e) {
-        //     throw new RuntimeException(e);
-        // }
+        log.info("JWTService initialized");
     }
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .claims()
                 .add(claims)
                 .subject(username)
@@ -40,7 +35,8 @@ public class JWTService {
                 .and()
                 .signWith(getKey())
                 .compact();
-
+        log.info("Generated JWT for user: {}", username);
+        return token;
     }
 
     private SecretKey getKey() {
@@ -49,8 +45,9 @@ public class JWTService {
     }
 
     public String extractUserName(String token) {
-        // extract the username from jwt token
-        return extractClaim(token, Claims::getSubject);
+        String username = extractClaim(token, Claims::getSubject);
+        log.debug("Extracted username from token: {}", username);
+        return username;
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
@@ -60,31 +57,39 @@ public class JWTService {
 
     private Claims extractAllClaims(String token) {
         try {
-        return Jwts.parser()
-                .verifyWith(getKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+            Claims claims = Jwts.parser()
+                    .verifyWith(getKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            log.debug("Extracted claims from token");
+            return claims;
         } catch (io.jsonwebtoken.security.SignatureException e) {
-            System.out.println("Invalid JWT signature: " + e.getMessage());
+            log.warn("Invalid JWT signature: {}", e.getMessage());
             return getDefaultClaims();
         } catch (Exception e) {
-            System.out.println("JWT parsing failed: " + e.getMessage());
+            log.error("JWT parsing failed: {}", e.getMessage());
             return getDefaultClaims();
         }
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
-        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        boolean isValid = userName.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        log.info("Token validation for user {}: {}", userName, isValid ? "valid" : "invalid");
+        return isValid;
     }
 
     private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        boolean expired = extractExpiration(token).before(new Date());
+        log.debug("Token expiration check: {}", expired ? "expired" : "valid");
+        return expired;
     }
 
     private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+        Date expiration = extractClaim(token, Claims::getExpiration);
+        log.debug("Extracted expiration: {}", expiration);
+        return expiration;
     }
 
     private Claims getDefaultClaims() {
@@ -92,6 +97,7 @@ public class JWTService {
                 .add("sub", "")
                 .add("exp", 0L)
                 .build();
+        log.debug("Returning default claims");
         return defaultClaims;
     }
 }

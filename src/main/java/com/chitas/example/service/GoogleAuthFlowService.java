@@ -2,6 +2,7 @@ package com.chitas.example.service;
 
 import java.io.IOException;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import com.chitas.example.model.UserCreds;
@@ -20,6 +21,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 @Service
+@Log4j2
 public class GoogleAuthFlowService {
 
     private static final String CLIENT_ID = System
@@ -29,79 +31,78 @@ public class GoogleAuthFlowService {
 
     public GoogleTokenResponse requestTokens(String authCode) throws IOException {
         try {
+            log.info("Requesting tokens for auth code: {}", authCode);
             GoogleTokenResponse response = new GoogleAuthorizationCodeTokenRequest(
                     new NetHttpTransport(), new GsonFactory(),
                     CLIENT_ID, CLIENT_SECRET,
                     authCode, "http://localhost:5173")
                     .execute();
+            log.info("Tokens retrieved successfully");
             return response;
         } catch (TokenResponseException e) {
+            log.error("Token request failed: {}", e.getMessage());
             if (e.getDetails() != null) {
-                System.err.println("Error: " + e.getDetails().getError());
-                if (e.getDetails().getErrorDescription() != null) {
-                    System.err.println(e.getDetails().getErrorDescription());
-                }
-                if (e.getDetails().getErrorUri() != null) {
-                    System.err.println(e.getDetails().getErrorUri());
-                }
-            } else {
-                System.err.println(e.getMessage());
+                log.error("Error details: {} - {}", e.getDetails().getError(), e.getDetails().getErrorDescription());
             }
         }
+        log.warn("Returning null due to token request failure");
         return null;
     }
 
     public GoogleCredentials getCredentials(String authCode) throws IOException {
+        log.info("Getting credentials for auth code: {}", authCode);
         GoogleTokenResponse gtok = requestTokens(authCode);
         AccessToken tok = new AccessToken(gtok.getAccessToken(), null);
+        log.info("Credentials created successfully");
         return GoogleCredentials.create(tok);
-
     }
 
     public void printUserInfo(GoogleCredentials credentials) {
         try {
-
+            log.info("Printing user info");
             JsonObject userInfo = getUserJson(credentials);
-
-            System.out.println("User ID: " + userInfo.get("sub").getAsString());
-            System.out.println("Email: " + userInfo.get("email").getAsString());
-            System.out.println("Name: " + userInfo.get("name").getAsString());
+            log.info("User ID: {}, Email: {}, Name: {}", 
+                userInfo.get("sub").getAsString(), 
+                userInfo.get("email").getAsString(), 
+                userInfo.get("name").getAsString());
         } catch (Exception e) {
-            System.out.println("Error retrieving user info: " + e.getMessage());
+            log.error("Error retrieving user info: {}", e.getMessage());
         }
     }
 
     private JsonObject getUserJson(GoogleCredentials credentials) {
         try {
+            log.debug("Fetching user JSON");
             credentials.refreshIfExpired();
             String accessToken = credentials.getAccessToken().getTokenValue();
-
-            // Set up HTTP request to Userinfo endpoint
             HttpRequestFactory requestFactory = new NetHttpTransport().createRequestFactory();
             GenericUrl url = new GenericUrl("https://www.googleapis.com/oauth2/v3/userinfo");
             HttpRequest request = requestFactory.buildGetRequest(url);
             request.getHeaders().setAuthorization("Bearer " + accessToken);
-
-            // Execute request and get response
             HttpResponse response = request.execute();
             String json = response.parseAsString();
-
-            // Parse JSON response
-            return JsonParser.parseString(json).getAsJsonObject();
+            JsonObject userJson = JsonParser.parseString(json).getAsJsonObject();
+            log.debug("User JSON retrieved successfully");
+            return userJson;
         } catch (Exception e) {
-            System.out.println("Method getUserInfo returned null");
+            log.error("Failed to get user JSON: {}", e.getMessage());
             return null;
         }
     }
 
     public UserCreds getUserInfo(GoogleCredentials credentials) {
+        log.info("Getting user info from credentials");
         JsonObject jsonObject = getUserJson(credentials);
-        return new UserCreds(jsonObject.get("sub").getAsString(), jsonObject.get("email").getAsString(),
+        UserCreds userCreds = new UserCreds(jsonObject.get("sub").getAsString(), 
+                jsonObject.get("email").getAsString(), 
                 jsonObject.get("name").getAsString());
+        log.info("User info retrieved: {}", userCreds.getEmail());
+        return userCreds;
     }
 
     public String autoEmailToUsername(String email){
-        return email.split("@")[0];
+        String username = email.split("@")[0];
+        log.debug("Converted email {} to username: {}", email, username);
+        return username;
     }
-
 }

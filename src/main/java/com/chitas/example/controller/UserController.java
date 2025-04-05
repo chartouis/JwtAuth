@@ -3,6 +3,7 @@ package com.chitas.example.controller;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,59 +26,67 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping
+@Log4j2
 public class UserController {
 
     private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
-
     }
 
     @PostMapping("/register")
     public ResponseEntity<UserDTO> register(@RequestBody @Valid RegisterInput reg) {
-
+        log.info("Register request for email: {}", reg.getEmail());
         UserDTO registeredUser = userService.register(new User(reg));
-        if (!userService.isVerifiedUser(reg.getEmail(),reg.getFingerprint(), false)) {
+        if (!userService.isVerifiedUser(reg.getEmail(), reg.getFingerprint(), false)) {
+            log.info("2FA required for email: {}", reg.getEmail());
             return ResponseEntity.status(HttpStatus.CONTINUE).body(new UserDTO(0L, "2FA",
                     "The code was sent to this email" + reg.getEmail(), LocalDateTime.now()));
         }
+        log.info("User registered successfully: {}", reg.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);
     }
 
     @PostMapping("/login")
     public ResponseEntity<JWT> login(@RequestBody @Valid LoginInput login, HttpServletResponse response) {
-
+        log.info("Login request for username: {}", login.getUsername());
         JWT token = userService.verify(new User(login), response);
-        
         if (!userService.isVerifiedUser(login.getUsername(), login.getFingerprint(), true)) {
+            log.info("Email verification required for: {}", login.getUsername());
             return ResponseEntity.status(HttpStatus.CONTINUE).body(new JWT("VERIFY EMAIL"));
         }
+        log.info("Login successful for: {}", login.getUsername());
         return ResponseEntity.ok(token);
     }
 
     @GetMapping("/refresh")
     public ResponseEntity<JWT> refresh(HttpServletResponse response) {
+        log.info("Token refresh request");
         JWT token = userService.refresh(response);
+        log.info("Token refreshed successfully");
         return ResponseEntity.ok(token);
     }
 
     @PostMapping("/oauth")
     public ResponseEntity<String> googleOauth(@RequestBody @Valid AuthCode code, HttpServletResponse response) {
+        log.info("Google OAuth request with code: {}", code.getCode());
         String result = userService.googleOauth(code, response);
+        log.info("Google OAuth result: {}", result);
         return ResponseEntity.ok(result);
     }
 
     @PostMapping("/code")
     public ResponseEntity<String> validateUser(@RequestBody @Valid VerifyCodeInput input) {
+        log.info("Validating user with code: {} and fingerprint: {}", input.getCode(), input.getFingerprint());
         String result = userService.validateUser(input.getCode(), input.getFingerprint());
+        log.info("Validation result: {}", result);
         return ResponseEntity.ok(result);
     }
 
-    // This is useless. You can freely delete it
     @GetMapping("/api/test")
     public String postMethodName() {
+        log.info("Test endpoint called");
         return "SUCCESS";
     }
-
 }
