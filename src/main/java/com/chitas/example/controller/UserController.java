@@ -1,6 +1,8 @@
 package com.chitas.example.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,9 +10,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chitas.example.model.AuthCode;
 import com.chitas.example.model.JWT;
+import com.chitas.example.model.User;
+import com.chitas.example.model.DTO.LoginInput;
+import com.chitas.example.model.DTO.RegisterInput;
 import com.chitas.example.model.DTO.UserDTO;
-import com.chitas.example.model.Wrappers.CodeAndFingerprint;
-import com.chitas.example.model.Wrappers.UserAndFingerPrint;
+import com.chitas.example.model.DTO.VerifyCodeInput;
 import com.chitas.example.service.UserService;
 
 import java.time.LocalDateTime;
@@ -31,21 +35,22 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> register(@RequestBody UserAndFingerPrint wrapper) {
+    public ResponseEntity<UserDTO> register(@RequestBody @Valid RegisterInput reg) {
 
-        UserDTO registeredUser = userService.register(wrapper.getUser());
-        if (!userService.isVerifiedUser(wrapper)) {
+        UserDTO registeredUser = userService.register(new User(reg));
+        if (!userService.isVerifiedUser(reg.getEmail(),reg.getFingerprint(), false)) {
             return ResponseEntity.status(HttpStatus.CONTINUE).body(new UserDTO(0L, "2FA",
-                    "The code was sent to this email" + wrapper.getUser().getEmail(), LocalDateTime.now()));
+                    "The code was sent to this email" + reg.getEmail(), LocalDateTime.now()));
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JWT> login(@RequestBody UserAndFingerPrint wrapper, HttpServletResponse response) {
+    public ResponseEntity<JWT> login(@RequestBody @Valid LoginInput login, HttpServletResponse response) {
 
-        JWT token = userService.verify(wrapper.getUser(), response);
-        if (!userService.isVerifiedUser(wrapper)) {
+        JWT token = userService.verify(new User(login), response);
+        
+        if (!userService.isVerifiedUser(login.getUsername(), login.getFingerprint(), true)) {
             return ResponseEntity.status(HttpStatus.CONTINUE).body(new JWT("VERIFY EMAIL"));
         }
         return ResponseEntity.ok(token);
@@ -58,14 +63,14 @@ public class UserController {
     }
 
     @PostMapping("/oauth")
-    public ResponseEntity<String> googleOauth(@RequestBody AuthCode code, HttpServletResponse response) {
+    public ResponseEntity<String> googleOauth(@RequestBody @Valid AuthCode code, HttpServletResponse response) {
         String result = userService.googleOauth(code, response);
         return ResponseEntity.ok(result);
     }
 
     @PostMapping("/code")
-    public ResponseEntity<String> validateUser(@RequestBody CodeAndFingerprint caf) {
-        String result = userService.validateUser(caf);
+    public ResponseEntity<String> validateUser(@RequestBody @Valid VerifyCodeInput input) {
+        String result = userService.validateUser(input.getCode(), input.getFingerprint());
         return ResponseEntity.ok(result);
     }
 

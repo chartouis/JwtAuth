@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import com.chitas.example.model.FACode;
 import com.chitas.example.model.Fingerprint;
 import com.chitas.example.model.User;
-import com.chitas.example.model.Wrappers.CodeAndFingerprint;
-import com.chitas.example.model.Wrappers.UserAndFingerPrint;
 import com.chitas.example.repo.CodesRepo;
 import com.chitas.example.repo.FingerprintsRepo;
 import com.chitas.example.repo.UsersRepo;
@@ -18,20 +16,15 @@ import com.chitas.example.repo.UsersRepo;
 public class TwoFactorService {
     private final FingerprintsRepo fRepo;
     private final CodesRepo cRepo;
-    private final UsersRepo uRepo;
-
     public TwoFactorService(FingerprintsRepo fRepo, CodesRepo cRepo, UsersRepo uRepo) {
         this.fRepo = fRepo;
         this.cRepo = cRepo;
-        this.uRepo = uRepo;
 
     }
 
-    public boolean fingerprintExists(Fingerprint fingerprint) {
-        if (fingerprint.getHash() == null) {
-            return false;
-        }
-        return fRepo.existsByHash(fingerprint.getHash());
+    public boolean fingerprintExists(String hash) {
+
+        return fRepo.existsByHash(hash);
 
     }
 
@@ -40,7 +33,7 @@ public class TwoFactorService {
     // }
 
     public User getFingerprintUser(Fingerprint fingerprint) {
-        if (!fingerprintExists(fingerprint)) {
+        if (!fingerprintExists(fingerprint.getHash())) {
             return null;
         }
         return fRepo.findUserByHash(fingerprint.getHash());
@@ -75,15 +68,15 @@ public class TwoFactorService {
         return fingerprint.getId().equals(code.getFingerprint().getId());
     }
 
-    public boolean verifyFingerprint(CodeAndFingerprint caf) {
-        FACode fcode = cRepo.findFACodeByCode(caf.getCode().getCode());
+    public boolean verifyFingerprint(String code, String hash) {
+        FACode fcode = cRepo.findFACodeByCode(code);
     
         if (fcode == null) {
             System.out.println("Invalid code");
             return false;
         }
-        System.out.println(caf.getFingerprint().getHash());
-        Fingerprint submitted = fRepo.findFingerprintByHash(caf.getFingerprint().getHash());
+        System.out.println(hash);
+        Fingerprint submitted = fRepo.findFingerprintByHash(hash);
     
         if (submitted == null) {
             return false;
@@ -116,9 +109,9 @@ public class TwoFactorService {
         return f.getUser();
     }
 
-    public Fingerprint createFingerprint(UserAndFingerPrint uaf) {
+    public Fingerprint createFingerprint(String hash, User user) {
         return fRepo.save(
-                new Fingerprint(uaf.getFingerprint().getHash(), uRepo.findById(uaf.getUser().getId()).orElseThrow()));
+                new Fingerprint(hash, user));
     }
 
 }

@@ -10,14 +10,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.chitas.example.model.AuthCode;
-import com.chitas.example.model.FACode;
 import com.chitas.example.model.Fingerprint;
 import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.UserCreds;
 import com.chitas.example.model.DTO.UserDTO;
-import com.chitas.example.model.Wrappers.CodeAndFingerprint;
-import com.chitas.example.model.Wrappers.UserAndFingerPrint;
 import com.chitas.example.repo.UsersRepo;
 import com.chitas.example.utils.RandomStringUtil;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -138,11 +135,11 @@ public class UserService {
 
     }
 
-    public String validateUser(CodeAndFingerprint caf) {
-        FACode code = caf.getCode();
-        boolean result = twoFactorService.verifyFingerprint(caf);
+    public String validateUser(String code, String hash) {
+
+        boolean result = twoFactorService.verifyFingerprint(code, hash);
         if (result) {
-            User user = twoFactorService.getUserbyCode(code.getCode());
+            User user = twoFactorService.getUserbyCode(code);
             register(user);
             return "SUCCCESS";
         } else {
@@ -150,23 +147,28 @@ public class UserService {
         }
 
     }
-    
-    public boolean isVerifiedUser(UserAndFingerPrint uaf) {
-        if(twoFactorService.getFingerprintByHash(uaf.getFingerprint().getHash())!=null){
-        if (twoFactorService.getFingerprintByHash(uaf.getFingerprint().getHash()).isVerified()) {
-            return true;
-        }}
-        if (!twoFactorService.fingerprintExists(uaf.getFingerprint())) {
-            if(!repo.existsByEmail(uaf.getUser().getEmail())){
+
+    public boolean isVerifiedUser(String emailOrUsername, String hash, boolean isLogin) {
+        String email = emailOrUsername;
+        if (isLogin && repo.existsByUsername(emailOrUsername)) {
+            email = repo.findByUsername(emailOrUsername).getEmail();
+        }
+        if (twoFactorService.getFingerprintByHash(hash) != null) {
+            if (twoFactorService.getFingerprintByHash(hash).isVerified()) {
+                return true;
+            }
+        }
+        if (!twoFactorService.fingerprintExists(hash)) {
+            if (!repo.existsByEmail(email)) {
                 return false;
             }
-            uaf.setUser(repo.findByEmail(uaf.getUser().getEmail()));
-            Fingerprint f = twoFactorService.createFingerprint(uaf);
+            User user = repo.findByEmail(email);
+            Fingerprint f = twoFactorService.createFingerprint(hash, user);
             mailService.sendVerficationCode(f);
             return false;
         }
 
-        Fingerprint f = twoFactorService.getFingerprintByHash(uaf.getFingerprint().getHash());
+        Fingerprint f = twoFactorService.getFingerprintByHash(hash);
         mailService.sendVerficationCode(f);
 
         return false;
