@@ -25,11 +25,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class UserController {
 
     private final UserService userService;
-    private final MailService mailService; // test
 
-    public UserController(UserService userService, MailService mailService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.mailService = mailService;
+
     }
 
     @PostMapping("/register")
@@ -66,7 +65,7 @@ public class UserController {
     }
 
     @PostMapping("/code")
-    public ResponseEntity<String> validateUser(@RequestBody CodeAndFingerprint caf) { //replace JWT with codandfingerprint, and then check for the fprint and code 
+    public ResponseEntity<String> validateUser(@RequestBody CodeAndFingerprint caf) {
         String result = userService.validateUser(caf);
         return ResponseEntity.ok(result);
     }
@@ -75,14 +74,6 @@ public class UserController {
     @GetMapping("/api/test")
     public String postMethodName() {
         return "SUCCESS";
-    }
-
-    @GetMapping("/api/mail")
-    public void mailSomething() {
-
-        mailService.sendSimpleMessage("erna95er@gmail.com", "я научился спамить",
-                "ну все пиздец. я по идее могу 500 вот таких мейлов высылать в день");
-
     }
 
 }
