@@ -11,7 +11,6 @@ import com.chitas.example.model.JWT;
 import com.chitas.example.model.DTO.UserDTO;
 import com.chitas.example.model.Wrappers.CodeAndFingerprint;
 import com.chitas.example.model.Wrappers.UserAndFingerPrint;
-import com.chitas.example.service.MailService;
 import com.chitas.example.service.UserService;
 
 import java.time.LocalDateTime;
