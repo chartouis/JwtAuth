@@ -36,7 +36,7 @@ public class TwoFactorService {
             log.warn("No user found for fingerprint hash: {}", fingerprint.getHash());
             return null;
         }
-        log.info("Found user for fingerprint hash {}: {}", fingerprint.getHash(), user);
+        log.info("Found user for fingerprint hash {}: {}", fingerprint.getHash(), user.getUsername());
         return user;
     }
     
