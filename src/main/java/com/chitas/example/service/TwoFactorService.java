@@ -13,6 +13,8 @@ import com.chitas.example.repo.CodesRepo;
 import com.chitas.example.repo.FingerprintsRepo;
 import com.chitas.example.repo.UsersRepo;
 
+import jakarta.transaction.Transactional;
+
 @Service
 @Log4j2
 public class TwoFactorService {
@@ -123,6 +125,7 @@ public class TwoFactorService {
         return fingerprint;
     }
 
+    @Transactional
     public void deleteCodeAndFingerprint(String code) {
         FACode c = cRepo.findFACodeByCode(code)
             .orElse(null);
