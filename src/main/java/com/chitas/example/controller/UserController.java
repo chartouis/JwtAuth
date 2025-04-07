@@ -14,6 +14,8 @@ import com.chitas.example.model.JWT;
 import com.chitas.example.model.User;
 import com.chitas.example.model.DTO.LoginInput;
 import com.chitas.example.model.DTO.RegisterInput;
+import com.chitas.example.model.DTO.ResetPasswordInput;
+import com.chitas.example.model.DTO.SetNewPasswordInput;
 import com.chitas.example.model.DTO.UserDTO;
 import com.chitas.example.model.DTO.VerifyCodeInput;
 import com.chitas.example.service.UserService;
@@ -81,6 +83,28 @@ public class UserController {
         log.info("Validating user with code: {} and fingerprint: {}", input.getCode(), input.getFingerprint());
         String result = userService.validateUser(input.getCode(), input.getFingerprint());
         log.info("Validation result: {}", result);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<String> resetPassword(@RequestBody @Valid ResetPasswordInput reset) {
+        log.info("Resetting password with email: {} and fingerprint: {}", reset.getEmail(), reset.getFingerprint());
+
+        userService.isVerifiedUser(reset.getEmail(), reset.getFingerprint() + "_PASSWORD_RESET", false);
+        log.info("Password reset verification sent to : {}", reset.getEmail());
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("VERIFY EMAIL");
+
+    }
+
+    @PostMapping("/newpassword")
+    public ResponseEntity<String> setNewPassword(@RequestBody @Valid SetNewPasswordInput newPasswordInput) {
+        log.info("Validating user with code: {} and fingerprint: {}", newPasswordInput.getCode(),
+                newPasswordInput.getFingerprint());
+        String result = userService.validateUser(newPasswordInput.getCode(), newPasswordInput.getFingerprint()+"_PASSWORD_RESET");
+        log.info("Validation result: {}", result);
+        if(result.equals("SUCCESS")){
+            userService.setNewPassword(newPasswordInput.getPassword(),newPasswordInput.getFingerprint()+"_PASSWORD_RESET", newPasswordInput.getCode());
+        }
         return ResponseEntity.ok(result);
     }
 

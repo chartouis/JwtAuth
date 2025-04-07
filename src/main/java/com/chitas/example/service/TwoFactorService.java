@@ -31,14 +31,15 @@ public class TwoFactorService {
     }
 
     public User getFingerprintUser(Fingerprint fingerprint) {
-        if (!fingerprintExists(fingerprint.getHash())) {
+        User user = fRepo.findUserByHash(fingerprint.getHash());
+        if (user == null) {
             log.warn("No user found for fingerprint hash: {}", fingerprint.getHash());
             return null;
         }
-        User user = fRepo.findUserByHash(fingerprint.getHash());
         log.info("Found user for fingerprint hash {}: {}", fingerprint.getHash(), user);
         return user;
     }
+    
 
     public Fingerprint getFingerprintByHash(String hash) {
         Fingerprint fingerprint = fRepo.findFingerprintByHash(hash);
@@ -130,4 +131,18 @@ public class TwoFactorService {
         log.info("Created fingerprint for hash {}: {}", hash, fingerprint);
         return fingerprint;
     }
+
+    public void deleteCodeAndFingerprint(String code) {
+        FACode c = cRepo.findFACodeByCode(code);
+        if (c != null) {
+            log.info("Deleting the code : {} and its fingerprint", code);
+            cRepo.delete(c);
+            fRepo.delete(c.getFingerprint());
+            log.info("Was deleted: {}", code);
+        } else {
+            log.info("Wasn't able to delete the code : {}", code);
+        }
+        
+    }
+
 }

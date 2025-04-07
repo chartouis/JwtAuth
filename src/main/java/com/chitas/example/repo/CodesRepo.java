@@ -14,4 +14,5 @@ public interface CodesRepo extends JpaRepository<FACode, Long> {
     Fingerprint findFingerprintByFacodeId(@Param("facodeId") Long facodeId);
 
     public FACode findFACodeByCode(String code);
+    public boolean existsByCode(String code);
 }

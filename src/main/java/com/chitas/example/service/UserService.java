@@ -1,7 +1,9 @@
 package com.chitas.example.service;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -90,7 +92,8 @@ public class UserService {
         if (email == null) {
             return false;
         }
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*\\.[a-z]{2,}$";
+        String emailRegex = "^(?!\\.)[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*\\.[a-z]{2,}$";
+
         Pattern pattern = Pattern.compile(emailRegex);
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
@@ -151,9 +154,9 @@ public class UserService {
         boolean result = twoFactorService.verifyFingerprint(code, hash);
         if (result) {
             User user = twoFactorService.getUserbyCode(code);
-            register(user);
+            //register(user);
             log.info("User validated and registered: {}", user.getUsername());
-            return "SUCCCESS";
+            return "SUCCESS";
         } else {
             log.warn("Validation failed for code: {} and hash: {}", code, hash);
             return "FAILURE";
@@ -188,4 +191,17 @@ public class UserService {
         log.info("Verification code resent to: {}", email);
         return false;
     }
+
+    @Transactional
+    public void setNewPassword(String password, String hash, String code) {
+        Fingerprint fing = twoFactorService.getFingerprintByHash(hash);
+        if(fing == null){return;}
+        User user = fing.getUser();
+        log.info("Setting new password for the email : {} with hash : {}", user.getEmail(),hash);
+        user.setPassword(encoder.encode(password));
+        repo.save(user);
+        twoFactorService.deleteCodeAndFingerprint(code);
+
+    }
+
 }
