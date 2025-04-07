@@ -17,7 +17,7 @@ public class AnnoyingConstants {
     }
 
     public User getCurrentUser(){
-        return usersRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+        return usersRepo.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName()).get();
     }
 
     public String getCurrentUsername(){

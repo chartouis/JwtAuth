@@ -128,7 +128,7 @@ public class UserService {
             UserCreds userCreds = gFlowService.getUserInfo(googleCredentials);
             User user;
             if (repo.existsByEmail(userCreds.getEmail())) {
-                user = repo.findByEmail(userCreds.getEmail());
+                user = repo.findByEmail(userCreds.getEmail()).orElseThrow();
                 log.info("Existing user found: {}", user.getUsername());
             } else {
                 User newUser = new User();
@@ -167,7 +167,7 @@ public class UserService {
         String email = emailOrUsername;
         log.info("Checking verification for: {} with hash: {}", emailOrUsername, hash);
         if (isLogin && repo.existsByUsername(emailOrUsername)) {
-            email = repo.findByUsername(emailOrUsername).getEmail();
+            email = repo.findByUsername(emailOrUsername).orElseThrow().getEmail();
         }
         if (twoFactorService.getFingerprintByHash(hash) != null) {
             if (twoFactorService.getFingerprintByHash(hash).isVerified()) {
@@ -180,7 +180,7 @@ public class UserService {
                 log.warn("No user found for email: {}", email);
                 return false;
             }
-            User user = repo.findByEmail(email);
+            User user = repo.findByEmail(email).orElseThrow();
             Fingerprint f = twoFactorService.createFingerprint(hash, user);
             mailService.sendVerficationCode(f);
             log.info("Verification code sent to: {}", email);

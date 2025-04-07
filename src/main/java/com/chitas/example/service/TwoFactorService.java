@@ -31,24 +31,19 @@ public class TwoFactorService {
     }
 
     public User getFingerprintUser(Fingerprint fingerprint) {
-        User user = fRepo.findUserByHash(fingerprint.getHash());
-        if (user == null) {
-            log.warn("No user found for fingerprint hash: {}", fingerprint.getHash());
-            return null;
-        }
-        log.info("Found user for fingerprint hash {}: {}", fingerprint.getHash(), user.getUsername());
-        return user;
+        return fRepo.findUserByHash(fingerprint.getHash())
+            .orElseThrow(() -> {
+                log.warn("No user found for fingerprint hash: {}", fingerprint.getHash());
+                return new IllegalStateException("User not found");
+            });
     }
-    
 
     public Fingerprint getFingerprintByHash(String hash) {
-        Fingerprint fingerprint = fRepo.findFingerprintByHash(hash);
-        if (fingerprint == null) {
-            log.warn("No fingerprint found for hash: {}", hash);
-        } else {
-            log.info("Fingerprint found for hash {}: {}", hash, fingerprint);
-        }
-        return fingerprint;
+        return fRepo.findFingerprintByHash(hash)
+            .orElseThrow(() -> {
+                log.warn("No fingerprint found for hash: {}", hash);
+                return new IllegalStateException("Fingerprint not found");
+            });
     }
 
     private FACode saveCode(FACode fCode) {
@@ -85,23 +80,19 @@ public class TwoFactorService {
     }
 
     public boolean verifyFingerprint(String code, String hash) {
-        FACode fcode = cRepo.findFACodeByCode(code);
-        if (fcode == null) {
-            log.error("Invalid code: {}", code);
-            return false;
-        }
+        FACode fcode = cRepo.findFACodeByCode(code)
+            .orElseThrow(() -> {
+                log.error("Invalid code: {}", code);
+                return new IllegalStateException("Invalid code");
+            });
 
-        Fingerprint submitted = fRepo.findFingerprintByHash(hash);
-        if (submitted == null) {
-            log.warn("No fingerprint found for hash: {}", hash);
-            return false;
-        }
+        Fingerprint submitted = fRepo.findFingerprintByHash(hash)
+            .orElseThrow(() -> {
+                log.warn("No fingerprint found for hash: {}", hash);
+                return new IllegalStateException("Fingerprint not found");
+            });
 
         Fingerprint expected = fcode.getFingerprint();
-        if (expected == null) {
-            log.warn("Expected fingerprint not found for code: {}", code);
-            return false;
-        }
 
         if (!submitted.getHash().equals(expected.getHash())) {
             log.warn("Fingerprint hash mismatch for code: {}", code);
@@ -115,13 +106,13 @@ public class TwoFactorService {
     }
 
     public User getUserbyCode(String code) {
-        FACode fcode = cRepo.findFACodeByCode(code);
-        if (fcode == null) {
-            log.error("Invalid code: {}", code);
-            return null;
-        }
-        Fingerprint f = fcode.getFingerprint();
-        User user = f.getUser();
+        FACode fcode = cRepo.findFACodeByCode(code)
+            .orElseThrow(() -> {
+                log.error("Invalid code: {}", code);
+                return new IllegalStateException("Code not found");
+            });
+
+        User user = fcode.getFingerprint().getUser();
         log.info("Found user for code: {}", code);
         return user;
     }
@@ -133,16 +124,17 @@ public class TwoFactorService {
     }
 
     public void deleteCodeAndFingerprint(String code) {
-        FACode c = cRepo.findFACodeByCode(code);
-        if (c != null) {
-            log.info("Deleting the code : {} and its fingerprint", code);
-            cRepo.delete(c);
-            fRepo.delete(c.getFingerprint());
-            log.info("Was deleted: {}", code);
-        } else {
-            log.info("Wasn't able to delete the code : {}", code);
-        }
-        
-    }
+        FACode c = cRepo.findFACodeByCode(code)
+            .orElse(null);
 
+        if (c == null) {
+            log.info("Wasn't able to delete the code : {}", code);
+            return;
+        }
+
+        log.info("Deleting the code : {} and its fingerprint", code);
+        cRepo.delete(c);
+        fRepo.delete(c.getFingerprint());
+        log.info("Was deleted: {}", code);
+    }
 }

@@ -1,5 +1,7 @@
 package com.chitas.example.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,12 +20,12 @@ public class CarderioUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = repo.findByUsername(username);
-        if (user == null){
+        Optional<User> user = repo.findByUsername(username);
+        if (user.isPresent()){
             System.out.println("User not found");
             throw new UsernameNotFoundException(username + " user was not found");
         }
-        return new UserPrincipal(user);
+        return new UserPrincipal(user.orElseThrow());
     }
 
 }
