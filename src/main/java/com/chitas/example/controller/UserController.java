@@ -53,11 +53,12 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<JWT> login(@RequestBody @Valid LoginInput login, HttpServletResponse response) {
         log.info("Login request for username: {}", login.getUsername());
-        JWT token = userService.verify(new User(login), response);
+        
         if (!userService.isVerifiedUser(login.getUsername(), login.getFingerprint(), true)) {
             log.info("Email verification required for: {}", login.getUsername());
             return ResponseEntity.status(HttpStatus.CONTINUE).body(new JWT("VERIFY EMAIL"));
         }
+        JWT token = userService.verify(new User(login), response);
         log.info("Login successful for: {}", login.getUsername());
         return ResponseEntity.ok(token);
     }

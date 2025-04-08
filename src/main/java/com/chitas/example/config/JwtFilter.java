@@ -12,7 +12,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.chitas.example.service.CarderioUserDetailsService;
+import com.chitas.example.service.MyUserDetailsService;
 import com.chitas.example.service.CookieService;
 import com.chitas.example.service.JWTService;
 
@@ -37,9 +37,9 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = cookieService.getToken(request);
         String username = jwtService.extractUserName(token); 
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null && token != null){
 
-            UserDetails userDetails = context.getBean(CarderioUserDetailsService.class).loadUserByUsername(username);
+            UserDetails userDetails = context.getBean(MyUserDetailsService.class).loadUserByUsername(username);
 
             if(jwtService.validateToken(token, userDetails)){
                 UsernamePasswordAuthenticationToken authToken =

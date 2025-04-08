@@ -1,38 +1,68 @@
 # JWTAUTH
 
-A Spring Boot application using PostgreSQL with a secure two-token authentication system.
+A secure authentication backend built with Spring Boot, supporting 2FA, OAuth2, and a two-token auth system. Designed to evolve into a microservice architecture.
 
-## Technologies Used
-- **Spring Boot 3.4.3** - Backend framework
-- **PostgreSQL** - Database
-- **Spring Security** - Authentication & Authorization
-- **JWT (JSON Web Token)** - Access & Refresh token system
-- **Java 23** - Programming language
+---
 
-## Security Implementation
-This project employs a **two-token system** for authentication:
+## 🔧 Tech Stack
 
-1. **Access Token** - Short-lived token for authentication.
-2. **Refresh Token** - Longer-lived token used to obtain new access tokens.
+- **Java 23**
+- **Spring Boot 3.4.3**
+- **PostgreSQL**
+- **Spring Security**
+- **JWT (Access + Refresh)**
+- **OAuth2 (Google)**
 
-### Token Storage & Security Measures
-- **HttpOnly Cookies**: Tokens are stored in HttpOnly cookies to prevent access from JavaScript.
-- **Secure Flag**: Cookies are only transmitted over HTTPS (off by default).
-- **SameSite=Strict**: Prevents CSRF by restricting cookie transmission to same-origin requests.
-- **Token Expiry**: Access tokens have a short expiration time, while refresh tokens last longer.
+---
 
-Tokens in this project are fully stateless and not stored on the backend.
+## 🔐 Security Overview
 
-## API Endpoints
-- `POST /login` - Authenticate and receive tokens.
-- `GET /refresh` - Obtain a new access token using the refresh token.
-- `POST /logout` - Invalidate tokens and clear cookies.
+**Two-token system** with optional **2FA** (code-based) tied to a device fingerprint.
 
-## Notes
-- Ensure you are running the application over HTTPS in production.
-- Environment variables should be used to store database credentials.
-- The secure flag for cookies is off by default.
+### Tokens
 
-## License
-This project is licensed under [MIT License](LICENSE).
+- **Access Token** – short-lived, for protected endpoints.
+- **Refresh Token** – longer-lived, used to reissue access tokens.
 
+### Token Handling
+
+- Stored in **HttpOnly** cookies.
+- Cookies use **SameSite=Strict** to reduce CSRF risk.
+- **Secure flag** should be enabled in production (HTTPS).
+- Refresh tokens are currently **stateful** (changeable in future).
+
+---
+
+## 🔁 2FA Flow (Email-based)
+
+1. Login/Register triggers code verification if device is unrecognized.
+2. Code is sent to email.
+3. Client verifies with `/code` endpoint.
+4. Upon success, full tokens are issued.
+
+---
+
+## 📡 API Endpoints
+
+- `POST /register` – Register new users.
+- `POST /login` – Log in with credentials.
+- `POST /code` – Submit 2FA code.
+- `GET /refresh` – Issue new access token.
+- `POST /reset` – Request password reset (sends code).
+- `POST /newpassword` – Set new password using reset code.
+- `POST /oauth` – Google OAuth2 login.
+
+---
+
+## ⚠️ Notes
+
+- 2FA required on unknown devices.
+- No frontend; assumes client handles storing cookies.
+- Email must be configured for code delivery.
+- Designed to become a reusable, modular **Auth microservice**.
+
+---
+
+## 🪪 License
+
+MIT – use, fork, break, learn.

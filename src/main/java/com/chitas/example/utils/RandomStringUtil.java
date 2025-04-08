@@ -7,7 +7,6 @@ public class RandomStringUtil {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private RandomStringUtil() {
-        // Private Konstruktor, damit niemand eine Instanz erstellt
     }
 
     public static String generate(int length) {

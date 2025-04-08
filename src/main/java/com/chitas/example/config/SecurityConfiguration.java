@@ -22,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
@@ -38,12 +39,12 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable) //.csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable) // .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/register", "/login", "/oauth", "/code", "/reset", "newpassword").permitAll()
                         .anyRequest().authenticated())
-                //.oauth2Login(Customizer.withDefaults())
-                
+                // .oauth2Login(Customizer.withDefaults())
+
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -56,8 +57,17 @@ public class SecurityConfiguration {
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowCredentials(true);
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Requested-With",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers",
+                "X-XSRF-TOKEN"));
+        configuration.setExposedHeaders(List.of("Authorization",
+                "X-XSRF-TOKEN",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -77,6 +87,5 @@ public class SecurityConfiguration {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
 
 }

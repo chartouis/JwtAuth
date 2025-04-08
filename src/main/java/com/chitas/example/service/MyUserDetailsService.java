@@ -12,8 +12,12 @@ import com.chitas.example.model.User;
 import com.chitas.example.model.UserPrincipal;
 import com.chitas.example.repo.UsersRepo;
 
+import lombok.extern.log4j.Log4j2;
+
+
 @Service
-public class CarderioUserDetailsService implements UserDetailsService {
+@Log4j2
+public class MyUserDetailsService implements UserDetailsService {
 
     @Autowired
     private UsersRepo repo;
@@ -21,8 +25,8 @@ public class CarderioUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> user = repo.findByUsername(username);
-        if (user.isPresent()){
-            System.out.println("User not found");
+        if (!user.isPresent()){
+            log.warn("User was not found: {}", username );
             throw new UsernameNotFoundException(username + " user was not found");
         }
         return new UserPrincipal(user.orElseThrow());
