@@ -1,5 +1,6 @@
 package com.chitas.example.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
@@ -19,8 +20,6 @@ import com.chitas.example.model.DTO.SetNewPasswordInput;
 import com.chitas.example.model.DTO.UserDTO;
 import com.chitas.example.model.DTO.VerifyCodeInput;
 import com.chitas.example.service.UserService;
-
-import java.time.LocalDateTime;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,10 +63,12 @@ public class UserController {
     }
 
     @GetMapping("/refresh")
-    public ResponseEntity<JWT> refresh(HttpServletResponse response) {
+    public ResponseEntity<JWT> refresh(HttpServletResponse response, HttpServletRequest request) {
         log.info("Token refresh request");
-        JWT token = userService.refresh(response);
-        log.info("Token refreshed successfully");
+        JWT token = userService.refresh(response, request);
+        if ( token.getToken().equals("FAILURE")){
+            return ResponseEntity.status(401).body(token);
+        };
         return ResponseEntity.ok(token);
     }
 
