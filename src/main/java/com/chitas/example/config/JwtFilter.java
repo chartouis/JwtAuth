@@ -34,10 +34,11 @@ public class JwtFilter extends OncePerRequestFilter {
     @SuppressWarnings("null")
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String token = cookieService.getToken(request);
+        String token = cookieService.getToken(request, true);
+        if (token == null){token = cookieService.getToken(request, false);}
         String username = jwtService.extractUserName(token); 
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null && token != null){
+        if (username != null || (SecurityContextHolder.getContext().getAuthentication() == null && token != null)){
 
             UserDetails userDetails = context.getBean(MyUserDetailsService.class).loadUserByUsername(username);
 

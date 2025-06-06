@@ -1,5 +1,6 @@
 package com.chitas.example.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
@@ -108,11 +109,11 @@ public class UserService {
         return new UserDTO(0L, "Failed to register", cause, LocalDateTime.MIN);
     }
 
-    public JWT refresh(HttpServletResponse response) {
+    public JWT refresh(HttpServletResponse response, HttpServletRequest request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         log.info("Refreshing token for user: {}", username);
         String tok = jwtService.generateToken(username);
-        if (tok == null) {
+        if (tok == null || !jwtService.validateToken(cook.getToken(request,false))) {
             log.warn("Token generation failed for user: {}", username);
             return new JWT("FAILURE");
         }
