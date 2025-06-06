@@ -19,7 +19,7 @@ public class CookieService {
                 .path(path)
                 .httpOnly(true)
                 .secure(false)
-                .sameSite("Strict")
+                //.sameSite("None") uncomment on deploy
                 .maxAge(age)
                 .build();
 
@@ -28,7 +28,7 @@ public class CookieService {
         return cookie.toString();
     }
 
-    public String getToken(HttpServletRequest request) {
+    public String getToken(HttpServletRequest request , boolean isAccessToken) { 
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
             log.warn("No cookies found in request");
@@ -37,7 +37,11 @@ public class CookieService {
     
         for (Cookie ck : cookies) {
             String name = ck.getName();
-            if ("REFRESH-TOKEN-JWTAUTH".equals(name) || "ACCESS-TOKEN-JWTAUTH".equals(name)) {
+            if (isAccessToken && "ACCESS-TOKEN-JWTAUTH".equals(name)){
+                log.info("Found token in cookie: {}", name);
+                return ck.getValue();
+            }
+            if (!isAccessToken && "REFRESH-TOKEN-JWTAUTH".equals(name)) {
                 log.info("Found token in cookie: {}", name);
                 return ck.getValue();
             }
