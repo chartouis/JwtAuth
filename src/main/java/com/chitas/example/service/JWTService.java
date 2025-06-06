@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.log4j.Log4j2;
+
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -76,6 +78,14 @@ public class JWTService {
     public boolean validateToken(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
         boolean isValid = userName.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        log.info("Token validation for user {}: {}", userName, isValid ? "valid" : "invalid");
+        return isValid;
+    }
+
+        public boolean validateToken(String token) {
+        final String userName = extractUserName(token);
+        if (userName==null){return false;}
+        boolean isValid = userName.equals(SecurityContextHolder.getContext().getAuthentication().getName()) && !isTokenExpired(token);
         log.info("Token validation for user {}: {}", userName, isValid ? "valid" : "invalid");
         return isValid;
     }
