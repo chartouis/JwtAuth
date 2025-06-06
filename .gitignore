@@ -4,7 +4,7 @@
 build/
 src/main/resources/.env
 bin/
-
+logs/
 
 .env
 .VSCodeCounter
