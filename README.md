@@ -33,7 +33,7 @@ A secure authentication backend built with Spring Boot, supporting 2FA, OAuth2, 
 
 ---
 
-## 🔁 2FA Flow (Email-based)
+## 🔁 2FA Flow (Email-based and also very crappy and vulnerable)
 
 1. Login/Register triggers code verification if device is unrecognized.
 2. Code is sent to email.
